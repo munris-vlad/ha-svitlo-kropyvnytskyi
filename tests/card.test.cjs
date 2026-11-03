@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 class Element {
-  constructor(tag='host'){this.tag=tag;this.children=[];this.style={};this.attributes={};}
+  constructor(tag='host'){this.tag=tag;this.children=[];this.style={setProperty(name,value){this[name]=value;}};this.attributes={};}
   attachShadow(){this.shadowRoot=new Element('shadow');return this.shadowRoot;}
   append(...items){this.children.push(...items);}
   replaceChildren(...items){this.children=items;}
@@ -114,4 +114,13 @@ test('editor exposes localized day switch option enabled by default',()=>{
   assert.ok(form.schema.find(field=>field.name==='show_day_switch').selector.boolean);
   assert.equal(form.computeLabel({name:'show_day_switch'}),label);
  }
+});
+test('applies YAML background and preserves it through polling without overriding the theme by default',()=>{
+ const card=make(),surface=()=>descendants(card.shadowRoot).find(node=>node.tag==='ha-card');
+ const value='color-mix(in srgb, var(--card-background-color) 70%, transparent)';
+ assert.equal(surface().style['--ha-card-background'],undefined);
+ card.setConfig({entity:'sensor.test','ha-card-background':value});
+ assert.equal(surface().style['--ha-card-background'],value);
+ card.hass=card._hass;assert.equal(surface().style['--ha-card-background'],value);
+ card.setConfig({entity:'sensor.test'});assert.equal(surface().style['--ha-card-background'],undefined);
 });
