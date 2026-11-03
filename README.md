@@ -19,7 +19,7 @@ Home Assistant integration and dashboard card for electricity outage schedules f
 5. Select one or more groups. Change it later using **Configure** on the integration.
 6. Reload the browser, then add the **Світло · Кропивницький** dashboard card.
 
-The card registers automatically in storage-mode dashboards. For YAML-managed resources, add `/svitlo_kropyvnytskyi/frontend/svitlo-card.js?v=0.2.2` as a module.
+The card registers automatically in storage-mode dashboards. For YAML-managed resources, add `/svitlo_kropyvnytskyi/frontend/svitlo-card.js?v=0.2.3` as a module.
 
 ```yaml
 type: custom:svitlo-card
