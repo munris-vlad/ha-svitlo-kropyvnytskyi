@@ -5,12 +5,14 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .api import FeedError, fetch_feed
-from .const import DOMAIN, GROUPS
+from .const import DOMAIN, GROUPS, selected_groups
 
 
-def schema(group="3.1"):
-    return vol.Schema({vol.Required("group", default=group): selector.SelectSelector(
-        selector.SelectSelectorConfig(options=GROUPS, mode=selector.SelectSelectorMode.DROPDOWN))})
+def schema(groups=None):
+    return vol.Schema({vol.Required("groups", default=groups or ["3.1"]): vol.All(
+        selector.SelectSelector(selector.SelectSelectorConfig(
+            options=GROUPS, multiple=True, mode=selector.SelectSelectorMode.DROPDOWN)),
+        vol.Length(min=1))})
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -40,4 +42,4 @@ class OptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
         return self.async_show_form(step_id="init", data_schema=schema(
-            self.config_entry.options.get("group", self.config_entry.data["group"])))
+            selected_groups(self.config_entry.data, self.config_entry.options)))

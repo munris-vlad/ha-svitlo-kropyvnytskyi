@@ -2,7 +2,7 @@
 
 Home Assistant integration and dashboard card for electricity outage schedules from the public [Svitlo Kropyvnytskyi Misto Telegram channel](https://t.me/SvitloKropyvnytskyiMisto).
 
-- Choose group 1.1–6.2 in the integration settings.
+- Choose one or more groups from 1.1–6.2 in the integration settings.
 - Checks the latest public Telegram messages every 60 seconds, including edits.
 - Switch between today and tomorrow (today is selected by default), with a 24-hour timeline, outage intervals, total duration and the last successful check time in the header.
 - Latest revision wins for each schedule date. A tomorrow post never replaces today's schedule.
@@ -16,10 +16,10 @@ Home Assistant integration and dashboard card for electricity outage schedules f
 2. Add `https://github.com/munris-vlad/ha-svitlo-kropyvnytskyi`, category **Integration**.
 3. Download, then restart Home Assistant.
 4. Settings → Devices & services → Add integration → **Svitlo · Kropyvnytskyi**.
-5. Select your group. Change it later using **Configure** on the integration.
+5. Select one or more groups. Change it later using **Configure** on the integration.
 6. Reload the browser, then add the **Світло · Кропивницький** dashboard card.
 
-The card registers automatically in storage-mode dashboards. For YAML-managed resources, add `/svitlo_kropyvnytskyi/frontend/svitlo-card.js?v=0.1.2` as a module.
+The card registers automatically in storage-mode dashboards. For YAML-managed resources, add `/svitlo_kropyvnytskyi/frontend/svitlo-card.js?v=0.2.0` as a module.
 
 ```yaml
 type: custom:svitlo-card
@@ -47,3 +47,5 @@ node --check custom_components/svitlo_kropyvnytskyi/frontend/svitlo-card.js
 ```
 
 MIT license. Independent community integration.
+
+Select several groups in the integration options to show group buttons above the day switcher. Each group has its own status and intervals. All groups share one Telegram request per minute. Existing single-group settings are preserved. The sensor state and legacy `days` attribute describe the first selected group; `queues` contains the individual statuses and schedules for all selected groups.

@@ -15,7 +15,7 @@ class ScheduleSensor(CoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "schedule"
     _attr_icon = "mdi:transmission-tower-off"
-    _unrecorded_attributes = frozenset({"days", "checked_at"})
+    _unrecorded_attributes = frozenset({"days", "queues", "checked_at"})
 
     def __init__(self, coordinator, entry):
         super().__init__(coordinator)
@@ -35,6 +35,15 @@ class ScheduleSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self):
-        return {"group": self.coordinator.group, "timezone": "Europe/Kyiv",
-                "days": group_days(self.coordinator.schedules, self.coordinator.group, datetime.now(KYIV).date()),
+        now = datetime.now(KYIV)
+        minute = now.hour * 60 + now.minute
+        queues = []
+        for group in self.coordinator.groups:
+            days = group_days(self.coordinator.schedules, group, now.date())
+            status = "no_schedule" if not days[0]["known"] else (
+                "scheduled_off" if any(start <= minute < end for start, end in days[0]["intervals"]) else "scheduled_on")
+            queues.append({"group": group, "days": days, "state": status})
+        return {"group": self.coordinator.group, "groups": self.coordinator.groups,
+                "queues": queues, "timezone": "Europe/Kyiv",
+                "days": queues[0]["days"],
                 "checked_at": self.coordinator.data["checked_at"]}

@@ -10,7 +10,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import FeedError, fetch_feed
-from .const import DOMAIN
+from .const import DOMAIN, selected_groups
 from .frontend import async_register_card
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -27,7 +27,8 @@ class ScheduleCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, entry):
         super().__init__(hass, logging.getLogger(__name__), name=DOMAIN,
                          config_entry=entry, update_interval=timedelta(seconds=60))
-        self.group = entry.options.get("group", entry.data["group"])
+        self.groups = selected_groups(entry.data, entry.options)
+        self.group = self.groups[0]
         self.schedules = {}
         self.store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}")
 

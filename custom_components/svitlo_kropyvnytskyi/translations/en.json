@@ -4,9 +4,9 @@
     "step": {
       "user": {
         "title": "Svitlo · Kropyvnytskyi",
-        "description": "Choose your outage group. The public Telegram feed is checked every minute.",
+        "description": "Choose one or more outage groups. The public Telegram feed is checked every minute.",
         "data": {
-          "group": "Outage group"
+          "groups": "Outage groups"
         }
       }
     },
@@ -21,9 +21,9 @@
     "step": {
       "init": {
         "title": "Svitlo · Kropyvnytskyi",
-        "description": "Choose your outage group. The public Telegram feed is checked every minute.",
+        "description": "Choose one or more outage groups. The public Telegram feed is checked every minute.",
         "data": {
-          "group": "Outage group"
+          "groups": "Outage groups"
         }
       }
     }

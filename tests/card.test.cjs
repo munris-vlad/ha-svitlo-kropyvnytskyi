@@ -11,7 +11,7 @@ class Element {
   addEventListener(name,handler){this.listeners??={};this.listeners[name]=handler;}
   click(){this.listeners?.click?.();}
   focus(){this.focused=true;}
-  querySelectorAll(selector){return descendants(this).filter(node=>selector==='.day-switch button' && node.tag==='button');}
+  querySelectorAll(selector){return descendants(this).filter(node=>node.className===selector.split(' ')[0].slice(1)).flatMap(node=>node.children.filter(child=>child.tag==='button'));}
   get text(){return [this.textContent || '',...this.children.map(c=>c.text)].join(' ');}
 }
 const registry=new Map();
@@ -77,4 +77,22 @@ test('returns to today when the calendar date rolls over',()=>{
  card.hass=card._hass;
  assert.equal(card.shadowRoot.querySelectorAll('.day-switch button')[0].attributes['aria-pressed'],'true');
  assert.match(descendants(card.shadowRoot).find(node=>node.className==='day').text,/Сегодня/);
+});
+test('switches groups independently and retains the selected day',()=>{
+ const card=make(),hass=card._hass;
+ hass.states['sensor.test'].attributes.queues=[
+  {group:'3.1',state:'scheduled_off',days:[{date:'2026-11-03',known:true,intervals:[[360,480]]},{date:'2026-11-04',known:true,intervals:[[600,720]]}]},
+  {group:'4.2',state:'scheduled_on',days:[{date:'2026-11-03',known:true,intervals:[[840,960]]},{date:'2026-11-04',known:true,intervals:[[1080,1200]]}]}
+ ];card.hass=hass;
+ card.shadowRoot.querySelectorAll('.day-switch button')[1].click();
+ card.shadowRoot.querySelectorAll('.group-switch button')[1].click();
+ assert.match(card.shadowRoot.text,/Группа 4.2/);assert.match(card.shadowRoot.text,/Сейчас по графику есть свет/);
+ assert.match(card.shadowRoot.text,/18:00–20:00/);assert.doesNotMatch(card.shadowRoot.text,/10:00–12:00/);
+ card.hass={...hass,language:'uk'};assert.match(card.shadowRoot.text,/Черга 4.2/);
+ hass.states['sensor.test'].attributes.queues=hass.states['sensor.test'].attributes.queues.slice(0,1);card.hass=hass;
+ assert.match(card.shadowRoot.text,/Группа 3.1/);assert.match(card.shadowRoot.text,/10:00–12:00/);
+});
+test('global feed failure overrides a selected queue status',()=>{
+ const card=make('unavailable');card._hass.states['sensor.test'].attributes.queues=[{group:'3.1',state:'scheduled_on',days:card._hass.states['sensor.test'].attributes.days}];card.hass=card._hass;
+ assert.match(card.shadowRoot.text,/Не удалось обновить/);assert.doesNotMatch(card.shadowRoot.text,/Сейчас по графику есть свет/);
 });
