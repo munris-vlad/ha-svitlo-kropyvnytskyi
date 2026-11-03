@@ -1,0 +1,80 @@
+const WORDS = {
+  ru: {title:"График отключений",group:"Группа",today:"Сегодня",tomorrow:"Завтра",missing:"График ещё не опубликован",none:"Отключения не запланированы",off:"Сейчас по графику отключение",on:"Сейчас по графику есть свет",error:"Не удалось обновить данные Telegram",checked:"Проверено",source:"Сообщение в Telegram",hint:"Плановый график · время Киева",entity:"Датчик графика",name:"Заголовок",settings:"Группа меняется в настройках интеграции «Світло · Кропивницький»",empty:"Добавьте интеграцию «Світло · Кропивницький»",planned:"Отключения",unknown:"Нет графика на сегодня"},
+  uk: {title:"Графік відключень",group:"Черга",today:"Сьогодні",tomorrow:"Завтра",missing:"Графік ще не опубліковано",none:"Відключення не заплановані",off:"Зараз за графіком відключення",on:"Зараз за графіком є світло",error:"Не вдалося оновити дані Telegram",checked:"Перевірено",source:"Повідомлення в Telegram",hint:"Плановий графік · час Києва",entity:"Сенсор графіка",name:"Заголовок",settings:"Черга змінюється в налаштуваннях інтеграції «Світло · Кропивницький»",empty:"Додайте інтеграцію «Світло · Кропивницький»",planned:"Відключення",unknown:"Немає графіка на сьогодні"},
+  en: {title:"Power outage schedule",group:"Group",today:"Today",tomorrow:"Tomorrow",missing:"Schedule not published yet",none:"No outages scheduled",off:"Outage scheduled now",on:"Power scheduled on now",error:"Could not update Telegram data",checked:"Checked",source:"Telegram message",hint:"Planned schedule · Kyiv time",entity:"Schedule sensor",name:"Title",settings:"Change the group in the Svitlo integration options",empty:"Add the Svitlo · Kropyvnytskyi integration",planned:"Outages",unknown:"No schedule for today"}
+};
+const words = hass => WORDS[(hass?.language || "en").split("-")[0]] || WORDS.en;
+const clock = minute => `${String(Math.floor(minute / 60)).padStart(2,"0")}:${String(minute % 60).padStart(2,"0")}`;
+const el = (tag, text, cls) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (cls) node.className = cls; return node; };
+const sensors = hass => Object.keys(hass?.states || {}).filter(id => id.startsWith("sensor.") && hass.states[id].attributes.timezone === "Europe/Kyiv" && Array.isArray(hass.states[id].attributes.days));
+
+class SvitloCard extends HTMLElement {
+  static getConfigElement() { return document.createElement("svitlo-card-editor"); }
+  static getStubConfig(hass) { return {entity:sensors(hass)[0] || ""}; }
+  constructor() { super(); this.attachShadow({mode:"open"}); }
+  setConfig(config) { this.config = {...config}; this.render(); }
+  set hass(hass) { this._hass = hass; this.render(); }
+  getCardSize() { return 5; }
+  getGridOptions() { return {columns:12,rows:5,min_columns:6,min_rows:4}; }
+  render() {
+    if (!this._hass || !this.config) return;
+    const w = words(this._hass), state = this._hass.states[this.config.entity || sensors(this._hass)[0]];
+    const root = this.shadowRoot; root.replaceChildren();
+    const style = el("style");
+    style.textContent = `ha-card{padding:20px;overflow:hidden}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.title{font-size:19px;font-weight:600}.badge{border-radius:14px;background:var(--secondary-background-color);padding:5px 10px;white-space:nowrap;font-size:13px}.status{margin:14px 0 18px;display:flex;gap:8px;align-items:center;font-size:14px}.dot{width:9px;height:9px;border-radius:50%;background:var(--success-color,#43a047)}.off .dot{background:var(--warning-color,#ffa600)}.error{color:var(--error-color)}.day{margin-top:18px}.date{font-weight:600;font-size:14px;display:flex;justify-content:space-between;gap:8px}.muted{color:var(--secondary-text-color);font-size:12px}.track{height:24px;position:relative;border-radius:6px;background:var(--secondary-background-color);margin-top:12px;overflow:hidden}.segment{position:absolute;height:100%;background:var(--warning-color,#ffa600)}.ticks{display:flex;justify-content:space-between;font-size:10px;color:var(--secondary-text-color);margin-top:4px}.intervals{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.interval{font-size:12px;padding:4px 7px;border-radius:5px;background:var(--secondary-background-color)}a{color:var(--primary-color);font-size:12px;text-decoration:none}.footer{border-top:1px solid var(--divider-color);margin-top:18px;padding-top:12px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.notice{margin:10px 0;font-size:13px}.marker{position:absolute;height:100%;width:2px;background:var(--primary-text-color);z-index:1}`;
+    root.append(style);
+    const card = el("ha-card"), head = el("div",undefined,"head");
+    head.append(el("div",this.config.title || w.title,"title"));
+    if (state) head.append(el("span",`${w.group} ${state.attributes.group}`,"badge"));
+    card.append(head); root.append(card);
+    if (!state) {card.append(el("p",w.empty,"notice")); return;}
+    const a = state.attributes, unavailable = ["unavailable","unknown"].includes(state.state);
+    const status = el("div",undefined,`status ${state.state === "scheduled_off" ? "off" : ""}`);
+    if (!unavailable && state.state !== "no_schedule") status.append(el("span",undefined,"dot"));
+    status.append(el("span",unavailable ? w.error : state.state === "no_schedule" ? w.unknown : state.state === "scheduled_off" ? w.off : w.on,unavailable ? "error" : ""));
+    card.append(status);
+    (a.days || []).forEach((day,index) => {
+      const section = el("div",undefined,"day"), date = el("div",undefined,"date");
+      date.append(el("span",`${index === 0 ? w.today : w.tomorrow} · ${day.date.split("-").reverse().join(".")}`));
+      const intervals = day.intervals || [];
+      if (day.known) date.append(el("span",`${Math.round(intervals.reduce((sum,[s,e])=>sum+e-s,0)/6)/10} h`,"muted"));
+      section.append(date);
+      if (!day.known) section.append(el("p",w.missing,"muted"));
+      else {
+        const track = el("div",undefined,"track"); track.setAttribute("role","img");
+        track.setAttribute("aria-label",`${w.planned}: ${intervals.length ? intervals.map(([s,e])=>`${clock(s)}–${clock(e)}`).join(", ") : w.none}`);
+        intervals.forEach(([start,end])=>{const span=el("div",undefined,"segment"); span.style.left=`${start/14.4}%`;span.style.width=`${(end-start)/14.4}%`;track.append(span);});
+        if(index===0) {const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Kyiv",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date());const time=Object.fromEntries(parts.map(p=>[p.type,p.value]));const marker=el("div",undefined,"marker");marker.style.left=`${(Number(time.hour)*60+Number(time.minute))/14.4}%`;track.append(marker);}
+        section.append(track); const ticks=el("div",undefined,"ticks"); [0,6,12,18,24].forEach(h=>ticks.append(el("span",`${String(h).padStart(2,"0")}:00`)));section.append(ticks);
+        const list=el("div",undefined,"intervals");
+        if(!intervals.length) list.append(el("span",w.none,"muted"));
+        intervals.forEach(([s,e])=>list.append(el("span",`${clock(s)}–${clock(e)}`,"interval")));
+        section.append(list);
+        if (/^https:\/\/t\.me\/SvitloKropyvnytskyiMisto\/\d+$/.test(day.source || "")) {const link=el("a",w.source);link.href=day.source;link.target="_blank";link.rel="noopener noreferrer";section.append(link);}
+      }
+      card.append(section);
+    });
+    const footer=el("div",undefined,"footer");footer.append(el("span",w.hint,"muted"));
+    if(a.checked_at) footer.append(el("span",`${w.checked}: ${new Intl.DateTimeFormat(this._hass.language || "en",{timeZone:"Europe/Kyiv",hour:"2-digit",minute:"2-digit"}).format(new Date(a.checked_at))}`,"muted"));
+    card.append(footer);
+  }
+}
+
+class SvitloEditor extends HTMLElement {
+  constructor(){super();this.attachShadow({mode:"open"});}
+  setConfig(config){this.config={...config};this.render();}
+  set hass(hass){this._hass=hass;this.render();}
+  render(){
+    if(!this.config || !this._hass)return;
+    const w=words(this._hass);this.shadowRoot.replaceChildren();
+    const form=el("ha-form");form.hass=this._hass;form.data=this.config;
+    form.schema=[{name:"entity",required:true,selector:{entity:{domain:"sensor",integration:"svitlo_kropyvnytskyi"}}},{name:"title",selector:{text:{}}}];
+    form.computeLabel=field=>field.name==="entity"?w.entity:w.name;
+    form.addEventListener("value-changed",event=>{this.config={...this.config,...event.detail.value};this.dispatchEvent(new CustomEvent("config-changed",{detail:{config:this.config},bubbles:true,composed:true}));});
+    this.shadowRoot.append(form,el("p",w.settings));
+  }
+}
+if(!customElements.get("svitlo-card"))customElements.define("svitlo-card",SvitloCard);
+if(!customElements.get("svitlo-card-editor"))customElements.define("svitlo-card-editor",SvitloEditor);
+window.customCards=window.customCards || [];
+if(!window.customCards.some(c=>c.type==="svitlo-card"))window.customCards.push({type:"svitlo-card",name:"Світло · Кропивницький",description:"Electricity outage schedule from Telegram · Today and tomorrow",preview:true});

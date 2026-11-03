@@ -1,0 +1,43 @@
+{
+  "title": "Svitlo · Kropyvnytskyi",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Svitlo · Kropyvnytskyi",
+        "description": "Choose your outage group. The public Telegram feed is checked every minute.",
+        "data": {
+          "group": "Outage group"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot read the public Telegram channel."
+    },
+    "abort": {
+      "already_configured": "Already configured. Change the group in integration options."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Svitlo · Kropyvnytskyi",
+        "description": "Choose your outage group. The public Telegram feed is checked every minute.",
+        "data": {
+          "group": "Outage group"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "schedule": {
+        "name": "Schedule",
+        "state": {
+          "scheduled_off": "Outage scheduled",
+          "scheduled_on": "Power scheduled on",
+          "no_schedule": "Schedule not published"
+        }
+      }
+    }
+  }
+}
