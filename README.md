@@ -19,7 +19,7 @@ Home Assistant integration and dashboard card for electricity outage schedules f
 5. Select one or more groups. Change it later using **Configure** on the integration.
 6. Reload the browser, then add the **Світло · Кропивницький** dashboard card.
 
-The card registers automatically in storage-mode dashboards. For YAML-managed resources, add `/svitlo_kropyvnytskyi/frontend/svitlo-card.js?v=0.2.6` as a module.
+The card registers automatically in storage-mode dashboards. For YAML-managed resources, add `/svitlo_kropyvnytskyi/frontend/svitlo-card.js?v=0.2.7` as a module.
 
 ```yaml
 type: custom:svitlo-card
@@ -57,3 +57,5 @@ Completed outage intervals are shown in gray on the timeline and muted in the in
 The outer surface uses the standard Home Assistant `ha-card` theme styling. Inner surfaces are transparent tints derived from the active theme text/accent colors, so dashboard backgrounds and light/dark themes remain consistent. No fixed palette or fixed black button shadow is applied. Theme changes update the colors through inherited CSS variables.
 
 In the visual card editor, disable **Show Today/Tomorrow buttons** to hide the day switcher and display today only. YAML equivalent: `show_day_switch: false`. The default is `true`; the setting applies independently to each card.
+
+Use **Background transparency** in the visual card editor (0–100%) for a per-card background override. At 0, the native theme background is retained; 100 makes the background fully transparent. Intermediate values mix the active theme card color with transparency, without fading text, controls or the chart. YAML example: `background_transparency: 40`.
