@@ -4,7 +4,7 @@ Home Assistant integration and dashboard card for electricity outage schedules f
 
 - Choose group 1.1–6.2 in the integration settings.
 - Checks the latest public Telegram messages every 60 seconds, including edits.
-- Separate schedules for today and tomorrow, with a 24-hour timeline, outage intervals, total duration and the last successful check time in the header.
+- Switch between today and tomorrow (today is selected by default), with a 24-hour timeline, outage intervals, total duration and the last successful check time in the header.
 - Latest revision wins for each schedule date. A tomorrow post never replaces today's schedule.
 - Ukrainian, Russian and English interface following Home Assistant language.
 - No Telegram login, bot token or API credentials required.
@@ -19,7 +19,7 @@ Home Assistant integration and dashboard card for electricity outage schedules f
 5. Select your group. Change it later using **Configure** on the integration.
 6. Reload the browser, then add the **Світло · Кропивницький** dashboard card.
 
-The card registers automatically in storage-mode dashboards. For YAML-managed resources, add `/svitlo_kropyvnytskyi/frontend/svitlo-card.js?v=0.1.1` as a module.
+The card registers automatically in storage-mode dashboards. For YAML-managed resources, add `/svitlo_kropyvnytskyi/frontend/svitlo-card.js?v=0.1.2` as a module.
 
 ```yaml
 type: custom:svitlo-card

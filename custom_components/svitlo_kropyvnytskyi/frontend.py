@@ -9,7 +9,7 @@ from homeassistant.components.lovelace.resources import ResourceStorageCollectio
 from .const import DOMAIN
 
 LOGGER = logging.getLogger(__name__)
-CARD_VERSION = "0.1.1"
+CARD_VERSION = "0.1.2"
 CARD_PATH = f"/{DOMAIN}/frontend/svitlo-card.js"
 CARD_URL = f"{CARD_PATH}?v={CARD_VERSION}"
 

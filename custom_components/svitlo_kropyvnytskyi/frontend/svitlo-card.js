@@ -1,7 +1,7 @@
 const WORDS = {
-  ru: {title:"График отключений",group:"Группа",today:"Сегодня",tomorrow:"Завтра",missing:"График ещё не опубликован",none:"Отключения не запланированы",off:"Сейчас по графику отключение",on:"Сейчас по графику есть свет",error:"Не удалось обновить данные Telegram",checked:"Проверено",hours:"ч",entity:"Датчик графика",name:"Заголовок",settings:"Группа меняется в настройках интеграции «Світло · Кропивницький»",empty:"Добавьте интеграцию «Світло · Кропивницький»",planned:"Отключения",unknown:"Нет графика на сегодня"},
-  uk: {title:"Графік відключень",group:"Черга",today:"Сьогодні",tomorrow:"Завтра",missing:"Графік ще не опубліковано",none:"Відключення не заплановані",off:"Зараз за графіком відключення",on:"Зараз за графіком є світло",error:"Не вдалося оновити дані Telegram",checked:"Перевірено",hours:"год",entity:"Сенсор графіка",name:"Заголовок",settings:"Черга змінюється в налаштуваннях інтеграції «Світло · Кропивницький»",empty:"Додайте інтеграцію «Світло · Кропивницький»",planned:"Відключення",unknown:"Немає графіка на сьогодні"},
-  en: {title:"Power outage schedule",group:"Group",today:"Today",tomorrow:"Tomorrow",missing:"Schedule not published yet",none:"No outages scheduled",off:"Outage scheduled now",on:"Power scheduled on now",error:"Could not update Telegram data",checked:"Checked",hours:"h",entity:"Schedule sensor",name:"Title",settings:"Change the group in the Svitlo integration options",empty:"Add the Svitlo · Kropyvnytskyi integration",planned:"Outages",unknown:"No schedule for today"}
+  ru: {title:"График отключений",group:"Группа",day:"День графика",today:"Сегодня",tomorrow:"Завтра",missing:"График ещё не опубликован",none:"Отключения не запланированы",off:"Сейчас по графику отключение",on:"Сейчас по графику есть свет",error:"Не удалось обновить данные Telegram",checked:"Проверено",hours:"ч",entity:"Датчик графика",name:"Заголовок",settings:"Группа меняется в настройках интеграции «Світло · Кропивницький»",empty:"Добавьте интеграцию «Світло · Кропивницький»",planned:"Отключения",unknown:"Нет графика на сегодня"},
+  uk: {title:"Графік відключень",group:"Черга",day:"День графіка",today:"Сьогодні",tomorrow:"Завтра",missing:"Графік ще не опубліковано",none:"Відключення не заплановані",off:"Зараз за графіком відключення",on:"Зараз за графіком є світло",error:"Не вдалося оновити дані Telegram",checked:"Перевірено",hours:"год",entity:"Сенсор графіка",name:"Заголовок",settings:"Черга змінюється в налаштуваннях інтеграції «Світло · Кропивницький»",empty:"Додайте інтеграцію «Світло · Кропивницький»",planned:"Відключення",unknown:"Немає графіка на сьогодні"},
+  en: {title:"Power outage schedule",group:"Group",day:"Schedule day",today:"Today",tomorrow:"Tomorrow",missing:"Schedule not published yet",none:"No outages scheduled",off:"Outage scheduled now",on:"Power scheduled on now",error:"Could not update Telegram data",checked:"Checked",hours:"h",entity:"Schedule sensor",name:"Title",settings:"Change the group in the Svitlo integration options",empty:"Add the Svitlo · Kropyvnytskyi integration",planned:"Outages",unknown:"No schedule for today"}
 };
 const words = hass => WORDS[(hass?.language || "en").split("-")[0]] || WORDS.en;
 const clock = minute => `${String(Math.floor(minute / 60)).padStart(2,"0")}:${String(minute % 60).padStart(2,"0")}`;
@@ -11,17 +11,17 @@ const sensors = hass => Object.keys(hass?.states || {}).filter(id => id.startsWi
 class SvitloCard extends HTMLElement {
   static getConfigElement() { return document.createElement("svitlo-card-editor"); }
   static getStubConfig(hass) { return {entity:sensors(hass)[0] || ""}; }
-  constructor() { super(); this.attachShadow({mode:"open"}); }
+  constructor() { super(); this.attachShadow({mode:"open"}); this.selectedDay = 0; }
   setConfig(config) { this.config = {...config}; this.render(); }
   set hass(hass) { this._hass = hass; this.render(); }
-  getCardSize() { return 7; }
+  getCardSize() { return 5; }
   getGridOptions() { return {columns:12,rows:"auto",min_columns:6,min_rows:4}; }
   render() {
     if (!this._hass || !this.config) return;
     const w = words(this._hass), state = this._hass.states[this.config.entity || sensors(this._hass)[0]];
     const root = this.shadowRoot; root.replaceChildren();
     const style = el("style");
-    style.textContent = `ha-card{padding:20px;overflow:hidden}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.title{font-size:19px;font-weight:600}.badge{border-radius:14px;background:var(--secondary-background-color);padding:5px 10px;white-space:nowrap;font-size:13px}.status{margin:14px 0 18px;display:flex;gap:8px;align-items:center;font-size:14px}.dot{width:9px;height:9px;border-radius:50%;background:var(--success-color,#43a047)}.off .dot{background:var(--warning-color,#ffa600)}.error{color:var(--error-color)}.day{margin-top:18px}.date{font-weight:600;font-size:14px;display:flex;justify-content:space-between;gap:8px}.muted{color:var(--secondary-text-color);font-size:12px}.track{height:24px;position:relative;border-radius:6px;background:var(--secondary-background-color);margin-top:12px;overflow:hidden}.segment{position:absolute;height:100%;background:var(--warning-color,#ffa600)}.ticks{display:flex;justify-content:space-between;font-size:10px;color:var(--secondary-text-color);margin-top:4px}.intervals{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.interval{font-size:12px;padding:4px 7px;border-radius:5px;background:var(--secondary-background-color)}.checked{margin-top:5px}.notice{margin:10px 0;font-size:13px}.marker{position:absolute;height:100%;width:2px;background:var(--primary-text-color);z-index:1}`;
+    style.textContent = `ha-card{padding:20px;overflow:hidden}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.title{font-size:19px;font-weight:600}.badge{border-radius:14px;background:var(--secondary-background-color);padding:5px 10px;white-space:nowrap;font-size:13px}.status{margin:14px 0 18px;display:flex;gap:8px;align-items:center;font-size:14px}.dot{width:9px;height:9px;border-radius:50%;background:var(--success-color,#43a047)}.off .dot{background:var(--warning-color,#ffa600)}.error{color:var(--error-color)}.day{margin-top:18px}.day-switch{display:flex;gap:4px;padding:4px;border-radius:10px;background:var(--secondary-background-color)}.day-switch button{flex:1;border:0;border-radius:7px;padding:9px 12px;background:transparent;color:var(--secondary-text-color);font:inherit;font-size:14px;cursor:pointer}.day-switch button[aria-pressed="true"]{background:var(--card-background-color);color:var(--primary-text-color);font-weight:600;box-shadow:0 1px 3px #0002}.day-switch button:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}.date{font-weight:600;font-size:14px;display:flex;justify-content:space-between;gap:8px}.muted{color:var(--secondary-text-color);font-size:12px}.track{height:24px;position:relative;border-radius:6px;background:var(--secondary-background-color);margin-top:12px;overflow:hidden}.segment{position:absolute;height:100%;background:var(--warning-color,#ffa600)}.ticks{display:flex;justify-content:space-between;font-size:10px;color:var(--secondary-text-color);margin-top:4px}.intervals{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.interval{font-size:12px;padding:4px 7px;border-radius:5px;background:var(--secondary-background-color)}.checked{margin-top:5px}.notice{margin:10px 0;font-size:13px}.marker{position:absolute;height:100%;width:2px;background:var(--primary-text-color);z-index:1}`;
     root.append(style);
     const card = el("ha-card"), head = el("div",undefined,"head");
     const heading = el("div");
@@ -36,7 +36,28 @@ class SvitloCard extends HTMLElement {
     if (!unavailable && state.state !== "no_schedule") status.append(el("span",undefined,"dot"));
     status.append(el("span",unavailable ? w.error : state.state === "no_schedule" ? w.unknown : state.state === "scheduled_off" ? w.off : w.on,unavailable ? "error" : ""));
     card.append(status);
-    (a.days || []).forEach((day,index) => {
+    const days = a.days || [];
+    if (this.dayAnchor !== days[0]?.date) {
+      this.dayAnchor = days[0]?.date;
+      this.selectedDay = 0;
+    }
+    const switcher = el("div",undefined,"day-switch");
+    switcher.setAttribute("role","group");
+    switcher.setAttribute("aria-label",w.day);
+    [w.today,w.tomorrow].forEach((label,index) => {
+      const button = el("button",label);
+      button.type = "button";
+      button.setAttribute("aria-pressed",String(this.selectedDay === index));
+      button.addEventListener("click",() => {
+        this.selectedDay = index;
+        this.render();
+        this.shadowRoot.querySelectorAll(".day-switch button")[index]?.focus();
+      });
+      switcher.append(button);
+    });
+    card.append(switcher);
+    days.forEach((day,index) => {
+      if (index !== this.selectedDay) return;
       const section = el("div",undefined,"day"), date = el("div",undefined,"date");
       date.append(el("span",`${index === 0 ? w.today : w.tomorrow} · ${day.date.split("-").reverse().join(".")}`));
       const intervals = day.intervals || [];

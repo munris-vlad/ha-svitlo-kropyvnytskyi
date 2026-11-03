@@ -8,7 +8,10 @@ class Element {
   append(...items){this.children.push(...items);}
   replaceChildren(...items){this.children=items;}
   setAttribute(key,value){this.attributes[key]=value;}
-  addEventListener(){}
+  addEventListener(name,handler){this.listeners??={};this.listeners[name]=handler;}
+  click(){this.listeners?.click?.();}
+  focus(){this.focused=true;}
+  querySelectorAll(selector){return descendants(this).filter(node=>selector==='.day-switch button' && node.tag==='button');}
   get text(){return [this.textContent || '',...this.children.map(c=>c.text)].join(' ');}
 }
 const registry=new Map();
@@ -51,4 +54,27 @@ test('uses HA language for title, check label, duration, and editor',()=>{
 });
 test('changes language when HA language changes',()=>{
  const card=make();card.hass={...card._hass,language:'uk'};assert.match(card.shadowRoot.text,/Перевірено/);assert.doesNotMatch(card.shadowRoot.text,/Проверено/);
+});
+test('shows only today by default and switches to tomorrow',()=>{
+ const card=make();
+ const days=()=>descendants(card.shadowRoot).filter(node=>node.className==='day');
+ assert.equal(days().length,1);assert.match(days()[0].text,/03.11.2026/);
+ card.shadowRoot.querySelectorAll('.day-switch button')[1].click();
+ assert.equal(days().length,1);assert.match(days()[0].text,/04.11.2026/);assert.match(days()[0].text,/ещё не опубликован/);
+ assert.equal(card.shadowRoot.querySelectorAll('.day-switch button')[1].attributes['aria-pressed'],'true');
+ assert.equal(card.shadowRoot.querySelectorAll('.day-switch button')[1].focused,true);
+ card.shadowRoot.querySelectorAll('.day-switch button')[0].click();assert.match(days()[0].text,/03.11.2026/);
+});
+test('keeps the selected day through polling and language changes',()=>{
+ const card=make();card.shadowRoot.querySelectorAll('.day-switch button')[1].click();
+ card.hass={...card._hass,language:'en'};
+ const day=descendants(card.shadowRoot).find(node=>node.className==='day');
+ assert.match(day.text,/Tomorrow/);assert.match(day.text,/04.11.2026/);assert.doesNotMatch(day.text,/03.11.2026/);
+});
+test('returns to today when the calendar date rolls over',()=>{
+ const card=make();card.shadowRoot.querySelectorAll('.day-switch button')[1].click();
+ card._hass.states['sensor.test'].attributes.days=[{date:'2026-11-04',known:false,intervals:[]},{date:'2026-11-05',known:false,intervals:[]}];
+ card.hass=card._hass;
+ assert.equal(card.shadowRoot.querySelectorAll('.day-switch button')[0].attributes['aria-pressed'],'true');
+ assert.match(descendants(card.shadowRoot).find(node=>node.className==='day').text,/Сегодня/);
 });
