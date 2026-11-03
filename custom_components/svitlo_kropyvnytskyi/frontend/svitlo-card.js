@@ -14,8 +14,8 @@ class SvitloCard extends HTMLElement {
   constructor() { super(); this.attachShadow({mode:"open"}); }
   setConfig(config) { this.config = {...config}; this.render(); }
   set hass(hass) { this._hass = hass; this.render(); }
-  getCardSize() { return 5; }
-  getGridOptions() { return {columns:12,rows:5,min_columns:6,min_rows:4}; }
+  getCardSize() { return 7; }
+  getGridOptions() { return {columns:12,rows:"auto",min_columns:6,min_rows:4}; }
   render() {
     if (!this._hass || !this.config) return;
     const w = words(this._hass), state = this._hass.states[this.config.entity || sensors(this._hass)[0]];
