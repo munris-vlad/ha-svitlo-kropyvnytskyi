@@ -96,3 +96,22 @@ test('global feed failure overrides a selected queue status',()=>{
  const card=make('unavailable');card._hass.states['sensor.test'].attributes.queues=[{group:'3.1',state:'scheduled_on',days:card._hass.states['sensor.test'].attributes.days}];card.hass=card._hass;
  assert.match(card.shadowRoot.text,/Не удалось обновить/);assert.doesNotMatch(card.shadowRoot.text,/Сейчас по графику есть свет/);
 });
+test('hiding day buttons returns to today and persists on updates',()=>{
+ const card=make();card.shadowRoot.querySelectorAll('.day-switch button')[1].click();
+ card.setConfig({entity:'sensor.test',show_day_switch:false});
+ assert.equal(card.shadowRoot.querySelectorAll('.day-switch button').length,0);
+ assert.match(descendants(card.shadowRoot).find(node=>node.className==='day').text,/Сегодня/);
+ card.hass=card._hass;assert.equal(card.shadowRoot.querySelectorAll('.day-switch button').length,0);
+ card.setConfig({entity:'sensor.test',show_day_switch:true});
+ assert.equal(card.shadowRoot.querySelectorAll('.day-switch button').length,2);
+});
+test('editor exposes localized day switch option enabled by default',()=>{
+ const Editor=registry.get('svitlo-card-editor');
+ for(const [language,label] of [['ru','Показывать кнопки Сегодня/Завтра'],['uk','Показувати кнопки Сьогодні/Завтра'],['en','Show Today/Tomorrow buttons']]){
+  const editor=new Editor();editor.setConfig({entity:'sensor.test'});editor.hass={language};
+  const form=editor.shadowRoot.children[0];
+  assert.equal(form.data.show_day_switch,true);
+  assert.ok(form.schema.find(field=>field.name==='show_day_switch').selector.boolean);
+  assert.equal(form.computeLabel({name:'show_day_switch'}),label);
+ }
+});

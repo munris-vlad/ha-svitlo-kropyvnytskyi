@@ -1,7 +1,7 @@
 const WORDS = {
-  ru: {title:"График отключений",group:"Группа",groups:"Очереди",day:"День графика",today:"Сегодня",tomorrow:"Завтра",missing:"График ещё не опубликован",none:"Отключения не запланированы",off:"Сейчас по графику отключение",on:"Сейчас по графику есть свет",error:"Не удалось обновить данные Telegram",checked:"Проверено",hours:"ч",entity:"Датчик графика",name:"Заголовок",settings:"Группа меняется в настройках интеграции «Світло · Кропивницький»",empty:"Добавьте интеграцию «Світло · Кропивницький»",planned:"Отключения",unknown:"Нет графика на сегодня"},
-  uk: {title:"Графік відключень",group:"Черга",groups:"Черги",day:"День графіка",today:"Сьогодні",tomorrow:"Завтра",missing:"Графік ще не опубліковано",none:"Відключення не заплановані",off:"Зараз за графіком відключення",on:"Зараз за графіком є світло",error:"Не вдалося оновити дані Telegram",checked:"Перевірено",hours:"год",entity:"Сенсор графіка",name:"Заголовок",settings:"Черга змінюється в налаштуваннях інтеграції «Світло · Кропивницький»",empty:"Додайте інтеграцію «Світло · Кропивницький»",planned:"Відключення",unknown:"Немає графіка на сьогодні"},
-  en: {title:"Power outage schedule",group:"Group",groups:"Groups",day:"Schedule day",today:"Today",tomorrow:"Tomorrow",missing:"Schedule not published yet",none:"No outages scheduled",off:"Outage scheduled now",on:"Power scheduled on now",error:"Could not update Telegram data",checked:"Checked",hours:"h",entity:"Schedule sensor",name:"Title",settings:"Change the group in the Svitlo integration options",empty:"Add the Svitlo · Kropyvnytskyi integration",planned:"Outages",unknown:"No schedule for today"}
+  ru: {title:"График отключений",group:"Группа",groups:"Очереди",show_days:"Показывать кнопки Сегодня/Завтра",day:"День графика",today:"Сегодня",tomorrow:"Завтра",missing:"График ещё не опубликован",none:"Отключения не запланированы",off:"Сейчас по графику отключение",on:"Сейчас по графику есть свет",error:"Не удалось обновить данные Telegram",checked:"Проверено",hours:"ч",entity:"Датчик графика",name:"Заголовок",settings:"Группа меняется в настройках интеграции «Світло · Кропивницький»",empty:"Добавьте интеграцию «Світло · Кропивницький»",planned:"Отключения",unknown:"Нет графика на сегодня"},
+  uk: {title:"Графік відключень",group:"Черга",groups:"Черги",show_days:"Показувати кнопки Сьогодні/Завтра",day:"День графіка",today:"Сьогодні",tomorrow:"Завтра",missing:"Графік ще не опубліковано",none:"Відключення не заплановані",off:"Зараз за графіком відключення",on:"Зараз за графіком є світло",error:"Не вдалося оновити дані Telegram",checked:"Перевірено",hours:"год",entity:"Сенсор графіка",name:"Заголовок",settings:"Черга змінюється в налаштуваннях інтеграції «Світло · Кропивницький»",empty:"Додайте інтеграцію «Світло · Кропивницький»",planned:"Відключення",unknown:"Немає графіка на сьогодні"},
+  en: {title:"Power outage schedule",group:"Group",groups:"Groups",show_days:"Show Today/Tomorrow buttons",day:"Schedule day",today:"Today",tomorrow:"Tomorrow",missing:"Schedule not published yet",none:"No outages scheduled",off:"Outage scheduled now",on:"Power scheduled on now",error:"Could not update Telegram data",checked:"Checked",hours:"h",entity:"Schedule sensor",name:"Title",settings:"Change the group in the Svitlo integration options",empty:"Add the Svitlo · Kropyvnytskyi integration",planned:"Outages",unknown:"No schedule for today"}
 };
 const words = hass => WORDS[(hass?.language || "en").split("-")[0]] || WORDS.en;
 const clock = minute => `${String(Math.floor(minute / 60)).padStart(2,"0")}:${String(minute % 60).padStart(2,"0")}`;
@@ -66,6 +66,7 @@ class SvitloCard extends HTMLElement {
       this.dayAnchor = days[0]?.date;
       this.selectedDay = 0;
     }
+    if (this.config.show_day_switch === false) this.selectedDay = 0;
     const switcher = el("div",undefined,"day-switch");
     switcher.setAttribute("role","group");
     switcher.setAttribute("aria-label",w.day);
@@ -80,7 +81,7 @@ class SvitloCard extends HTMLElement {
       });
       switcher.append(button);
     });
-    statusRow.append(switcher);
+    if (this.config.show_day_switch !== false) statusRow.append(switcher);
     card.append(statusRow);
     days.forEach((day,index) => {
       if (index !== this.selectedDay) return;
@@ -113,9 +114,9 @@ class SvitloEditor extends HTMLElement {
   render(){
     if(!this.config || !this._hass)return;
     const w=words(this._hass);this.shadowRoot.replaceChildren();
-    const form=el("ha-form");form.hass=this._hass;form.data=this.config;
-    form.schema=[{name:"entity",required:true,selector:{entity:{domain:"sensor",integration:"svitlo_kropyvnytskyi"}}},{name:"title",selector:{text:{}}}];
-    form.computeLabel=field=>field.name==="entity"?w.entity:w.name;
+    const form=el("ha-form");form.hass=this._hass;form.data={show_day_switch:true,...this.config};
+    form.schema=[{name:"entity",required:true,selector:{entity:{domain:"sensor",integration:"svitlo_kropyvnytskyi"}}},{name:"title",selector:{text:{}}},{name:"show_day_switch",selector:{boolean:{}}}];
+    form.computeLabel=field=>field.name==="entity"?w.entity:field.name==="show_day_switch"?w.show_days:w.name;
     form.addEventListener("value-changed",event=>{this.config={...this.config,...event.detail.value};this.dispatchEvent(new CustomEvent("config-changed",{detail:{config:this.config},bubbles:true,composed:true}));});
     this.shadowRoot.append(form,el("p",w.settings));
   }
