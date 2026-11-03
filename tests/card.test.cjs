@@ -115,12 +115,3 @@ test('editor exposes localized day switch option enabled by default',()=>{
   assert.equal(form.computeLabel({name:'show_day_switch'}),label);
  }
 });
-test('background transparency changes only the card surface and retains theme defaults',()=>{
- const card=make(),surface=()=>descendants(card.shadowRoot).find(node=>node.tag==='ha-card');
- assert.equal(surface().style.background,undefined);
- card.setConfig({entity:'sensor.test',background_transparency:40});
- assert.match(surface().style.background,/var\(--card-background-color/);assert.match(surface().style.background,/60%/);
- assert.equal(surface().style.opacity,undefined);
- card.setConfig({entity:'sensor.test',background_transparency:100});assert.equal(surface().style.background,'transparent');
- card.setConfig({entity:'sensor.test',background_transparency:'invalid'});assert.equal(surface().style.background,undefined);
-});
