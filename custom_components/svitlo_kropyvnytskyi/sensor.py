@@ -21,7 +21,7 @@ class ScheduleSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_schedule"
         self._attr_device_info = {"identifiers": {(DOMAIN, entry.entry_id)},
-                                  "name": "Світло · Кропивницький", "manufacturer": "Community",
+                                  "name": entry.title, "manufacturer": "Community",
                                   "model": "Telegram schedule"}
 
     @property

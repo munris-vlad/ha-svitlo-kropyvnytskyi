@@ -26,10 +26,33 @@ class RuntimeTests(unittest.TestCase):
         schedules = {today: {"groups": {group: ([[0,1440]] if group == "3.1" else []) for group in GROUPS}, "source": "https://t.me/SvitloKropyvnytskyiMisto/1", "published": None}}
         coordinator = SimpleNamespace(group="3.1", groups=["3.1", "4.2"], schedules=schedules,
                                       data={"checked_at": "2026-11-03T12:00:00+02:00"})
-        sensor = ScheduleSensor(coordinator, SimpleNamespace(entry_id="test"))
+        sensor = ScheduleSensor(coordinator, SimpleNamespace(entry_id="test", title="Queue 3.1"))
+        other_sensor = ScheduleSensor(coordinator, SimpleNamespace(entry_id="other", title="Queue 4.2"))
+        self.assertNotEqual(sensor.unique_id, other_sensor.unique_id)
+        self.assertNotEqual(sensor.device_info["identifiers"], other_sensor.device_info["identifiers"])
         attributes = sensor.extra_state_attributes
         self.assertEqual(attributes["groups"], ["3.1", "4.2"])
         self.assertEqual(attributes["queues"][0]["state"], "scheduled_off")
         self.assertEqual(attributes["queues"][1]["state"], "scheduled_on")
         self.assertEqual(attributes["days"], attributes["queues"][0]["days"])
         self.assertEqual(sensor.native_value, "scheduled_off")
+
+
+@unittest.skipUnless(HAS_HA, "Requires Home Assistant runtime")
+class MultipleEntryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_can_create_two_entries_even_for_same_groups(self):
+        from unittest.mock import AsyncMock, Mock, patch
+        from custom_components.svitlo_kropyvnytskyi.config_flow import ConfigFlow
+        for _ in range(2):
+            flow = ConfigFlow()
+            flow.hass = SimpleNamespace()
+            flow.async_set_unique_id = AsyncMock()
+            flow._abort_if_unique_id_configured = Mock()
+            flow.async_create_entry = Mock(side_effect=lambda **kwargs: {"type": "create_entry", **kwargs})
+            with patch("custom_components.svitlo_kropyvnytskyi.config_flow.fetch_feed", new_callable=AsyncMock), patch("custom_components.svitlo_kropyvnytskyi.config_flow.async_get_clientsession"):
+                result = await flow.async_step_user({"groups": ["3.1", "4.2"]})
+            self.assertEqual(result["type"], "create_entry")
+            self.assertEqual(result["data"]["groups"], ["3.1", "4.2"])
+            self.assertIn("3.1, 4.2", result["title"])
+            flow.async_set_unique_id.assert_not_called()
+            flow._abort_if_unique_id_configured.assert_not_called()

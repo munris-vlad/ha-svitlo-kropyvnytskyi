@@ -12,9 +12,6 @@
     },
     "error": {
       "cannot_connect": "Cannot read the public Telegram channel."
-    },
-    "abort": {
-      "already_configured": "Already configured. Change the group in integration options."
     }
   },
   "options": {

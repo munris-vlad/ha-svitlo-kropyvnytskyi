@@ -21,14 +21,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         errors = {}
         if user_input is not None:
-            await self.async_set_unique_id(DOMAIN)
-            self._abort_if_unique_id_configured()
             try:
                 await fetch_feed(async_get_clientsession(self.hass))
             except FeedError:
                 errors["base"] = "cannot_connect"
             else:
-                return self.async_create_entry(title="Світло · Кропивницький", data=user_input)
+                return self.async_create_entry(
+                    title="Світло · Кропивницький · " + ", ".join(user_input["groups"]),
+                    data=user_input)
         return self.async_show_form(step_id="user", data_schema=schema(), errors=errors)
 
     @staticmethod
