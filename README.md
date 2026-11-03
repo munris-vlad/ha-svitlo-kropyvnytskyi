@@ -19,7 +19,7 @@ Home Assistant integration and dashboard card for electricity outage schedules f
 5. Select one or more groups. Change it later using **Configure** on the integration.
 6. Reload the browser, then add the **Світло · Кропивницький** dashboard card.
 
-The card registers automatically in storage-mode dashboards. For YAML-managed resources, add `/svitlo_kropyvnytskyi/frontend/svitlo-card.js?v=0.2.9` as a module.
+The card registers automatically in storage-mode dashboards. For YAML-managed resources, add `/svitlo_kropyvnytskyi/frontend/svitlo-card.js?v=0.2.10` as a module.
 
 ```yaml
 type: custom:svitlo-card
@@ -32,7 +32,7 @@ Choose the actual sensor using the visual editor; its generated entity ID can di
 
 All dates, intervals and the current-time marker use **Europe/Kyiv** regardless of browser time zone. The status is the **planned** electricity state, not a measurement of actual grid power. Emergency cuts may differ from this schedule.
 
-The parser reads dated text schedules headed `Графік погодинних відключень` and subsequent revisions, with `Черга 3.1: 06:00-08:00, …` rows. For a recognized complete schedule, omitted groups have no planned outages. An absent dated schedule is shown as **not published**, never as uninterrupted power. Generic announcements do not clear a schedule. Explicit dated cancellations are supported. Malformed intervals produce an update error rather than reporting power on.
+The parser reads dated text schedules headed `Графік погодинних відключень` and subsequent revisions, with `Черга 3.1: 06:00-08:00, …` or shortened `Черга 3.1: 06-08, …` rows. Hour-only and minute-precision times can be mixed. For a recognized complete schedule, omitted groups have no planned outages. An absent dated schedule is shown as **not published**, never as uninterrupted power. Generic announcements do not clear a schedule. Explicit dated cancellations are supported. Malformed intervals produce an update error rather than reporting power on.
 
 If Telegram fails, the sensor becomes unavailable and the card displays an error, retaining the last known intervals and last successful check time. The last schedules are cached across restarts. Public Telegram HTML is not a stable API; layout or message-format changes may require an update. Schedule data consists only of public messages. No personal Telegram data is accessed.
 

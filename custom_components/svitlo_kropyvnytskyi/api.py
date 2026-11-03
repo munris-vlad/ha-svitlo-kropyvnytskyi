@@ -51,7 +51,10 @@ class FeedParser(HTMLParser):
 
 DATE = re.compile(r"(?<!\d)(\d{2})\.(\d{2})\.(\d{4})(?!\d)")
 GROUP = re.compile(r"(?:Черга|Група|Очередь)\s*([1-6][.,][12])\s*:\s*([^\n]*)", re.I)
-INTERVAL = re.compile(r"(\d{1,2})[:.](\d{2})\s*[-–—−]\s*(\d{1,2})[:.](\d{2})")
+INTERVAL = re.compile(
+    r"(?<![\d:.])(\d{1,2})(?:[:.](\d{2}))?\s*[-–—−]\s*"
+    r"(\d{1,2})(?:[:.](\d{2}))?(?![\d:.])"
+)
 
 
 def parse_schedule(post):
@@ -79,7 +82,7 @@ def parse_schedule(post):
         if INTERVAL.search(row[2]) and INTERVAL.sub("", row[2]).strip(" ,;."):
             raise FeedError("Unrecognized text in schedule intervals")
         for interval in INTERVAL.finditer(row[2]):
-            h1, m1, h2, m2 = map(int, interval.groups())
+            h1, m1, h2, m2 = (int(value or 0) for value in interval.groups())
             if h1 > 23 or m1 > 59 or h2 > 24 or m2 > 59 or (h2 == 24 and m2):
                 raise FeedError("Invalid schedule time")
             start, end = h1 * 60 + m1, h2 * 60 + m2

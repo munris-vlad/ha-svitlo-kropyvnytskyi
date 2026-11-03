@@ -51,6 +51,21 @@ class ParserTests(unittest.TestCase):
         schedule = api.parse_schedule(post(text(rows="Черга 3.1: 22:00–24:00")))
         self.assertEqual(schedule["groups"]["3.1"], [[1320,1440]])
 
+    def test_hour_only_post_1745_and_schedule_date(self):
+        value = 'Зміни на 21:53 03.11.2026 до графіка погодинних відключень\nЗа розпорядженням НЕК "Укренерго" 04.11.2026 внесено зміни до графіка погодинних відключень (ГПВ):\nЧерга 3.1: 02-04, 10-12, 14-16, 18-20\nЧерга 1.1: 06-08, 10-12, 14-16, 18-20, 22-24'
+        result = api.parse_feed(html(value,1745))["2026-11-04"]
+        self.assertEqual(result["groups"]["3.1"], [[120,240],[600,720],[840,960],[1080,1200]])
+        self.assertEqual(result["groups"]["1.1"][-1], [1320,1440])
+
+    def test_mixed_precision_intervals(self):
+        result = api.parse_schedule(post(text(rows="Черга 3.1: 6–08:30, 10:30—12, 22-24")))
+        self.assertEqual(result["groups"]["3.1"], [[360,510],[630,720],[1320,1440]])
+
+    def test_malformed_short_intervals_are_not_partially_parsed(self):
+        for value in ("06:0-08", "106-08", "06-08:123", "06-25", "24-24", "06-08, ???"):
+            with self.subTest(value=value), self.assertRaises(api.FeedError):
+                api.parse_schedule(post(text(rows="Черга 3.1: " + value)))
+
     def test_merge(self):
         schedule = api.parse_schedule(post(text(rows="Черга 3.1: 10:00-12:00, 11:00-14:00")))
         self.assertEqual(schedule["groups"]["3.1"], [[600,840]])
