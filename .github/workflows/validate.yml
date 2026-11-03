@@ -31,3 +31,4 @@ jobs:
         with:
           node-version: '22'
       - run: node --check custom_components/svitlo_kropyvnytskyi/frontend/svitlo-card.js
+      - run: node --test tests/card.test.cjs
