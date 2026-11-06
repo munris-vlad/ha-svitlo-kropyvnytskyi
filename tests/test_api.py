@@ -36,6 +36,15 @@ class ParserTests(unittest.TestCase):
         value = "Зміни на 23:47 25.10.2026 до графіка погодинних відключень\n" + text("26.10.2026")
         self.assertEqual(api.parse_schedule(post(value))["date"], "2026-10-26")
 
+    def test_date_before_dispatch_phrase(self):
+        value = '06.11.2026 за розпорядженням НЕК "Укренерго" буде діяти графік погодинних відключень (ГПВ):\nЧерга 3.1: 06-08, 10-12, 14-16, 18-20, 22-24'
+        schedule = api.parse_feed(html(value))["2026-11-06"]
+        self.assertEqual(schedule["groups"]["3.1"], [[360,480],[600,720],[840,960],[1080,1200],[1320,1440]])
+
+    def test_prefixed_revision_date_takes_priority_over_as_of_date(self):
+        value = 'На 06.11.2026 за розпорядженням НЕК "Укренерго" внесено зміни до графіка погодинних відключень станом на 23:30 05.11.2026:\nЧерга 3.1: 06-08'
+        self.assertEqual(api.parse_schedule(post(value))["date"], "2026-11-06")
+
     def test_latest_revision_and_tomorrow(self):
         feed = html(text(),10) + html(text(rows="Черга 3.1: 10:00-12:00"),12) + html(text("04.11.2026"),13)
         schedules = api.parse_feed(feed)

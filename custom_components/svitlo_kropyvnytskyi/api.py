@@ -64,7 +64,13 @@ def parse_schedule(post):
     # The header can mention yesterday's revision time. The dispatch sentence
     # carries the date to which the schedule actually applies.
     dispatch = re.search(r"За розпорядженням[^\n]*", text, re.I)
-    match = DATE.search(dispatch.group() if dispatch else text)
+    if dispatch:
+        line_start = text.rfind("\n", 0, dispatch.start()) + 1
+        prefix = text[line_start:dispatch.start()].strip()
+        prefix = re.sub(r"^на\s+", "", prefix, flags=re.I)
+        match = DATE.fullmatch(prefix) or DATE.search(dispatch.group())
+    else:
+        match = DATE.search(text)
     if not match:
         return None
     try:
